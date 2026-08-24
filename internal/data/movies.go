@@ -5,7 +5,12 @@ import (
 	"time"
 
 	"MovieLand.satyam/internal/validator"
+	"github.com/lib/pq"
 )
+
+type MovieModel struct {
+	DB *sql.DB
+}
 
 type Movie struct {
 	ID        int64     `json:"id"`
@@ -15,9 +20,6 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitzero"`
 	Genres    []string  `json:"genres,omitzero"`
 	Version   int32     `json:"version"`
-}
-type MovieModel struct {
-	DB *sql.DB
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
@@ -35,7 +37,14 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 }
 
 func (m MovieModel) Insert(movie *Movie) error {
-	return nil
+	query := `
+		INSERT INTO movies (title,year,runtime,genres)
+		VALUES ($1,$2,$3,$4)
+		RETURNING id, created_at,version
+	`
+
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 func (m MovieModel) Get(id int64) (*Movie, error) {
