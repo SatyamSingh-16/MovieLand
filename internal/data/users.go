@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"MovieLand.satyam/internal/validator"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -93,8 +94,9 @@ RETURNING id, created_at, version`
 	defer cancel()
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.ID, &user.CreatedAt, &user.Version)
 	if err != nil {
+		var pqErr *pq.Error
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+		case errors.As(err, &pqErr) && pqErr.Code == "23505":
 			return ErrDuplicateEmail
 		default:
 			return err
@@ -149,8 +151,9 @@ RETURNING version`
 	defer cancel()
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.Version)
 	if err != nil {
+		var pqErr *pq.Error
 		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+		case errors.As(err, &pqErr) && pqErr.Code == "23505":
 			return ErrDuplicateEmail
 		case errors.Is(err, sql.ErrNoRows):
 			return ErrEditConflict

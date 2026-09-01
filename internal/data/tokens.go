@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base32"
 	"time"
 
 	"MovieLand.satyam/internal/validator"
@@ -23,16 +24,24 @@ type Token struct {
 	Scope     string    `json:"-"`
 }
 
-func generateToken(userID int64, ttl time.Duration, scope string) *Token {
+func generateToken(userID int64, ttl time.Duration, scope string) (*Token, error) {
 	token := &Token{
-		Plaintext: rand.Text(),
-		UserID:    userID,
-		Expiry:    time.Now().Add(ttl),
-		Scope:     scope,
+		UserID: userID,
+		Expiry: time.Now().Add(ttl),
+		Scope:  scope,
 	}
+
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	token.Plaintext = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
 	hash := sha256.Sum256([]byte(token.Plaintext))
 	token.Hash = hash[:]
-	return token
+
+	return token, nil
 }
 func ValidateTokenPlaintext(v *validator.Validator, tokenPlaintext string) {
 	v.Check(tokenPlaintext != "", "token", "must be provided")
@@ -44,8 +53,11 @@ type TokenModel struct {
 }
 
 func (m TokenModel) New(userID int64, ttl time.Duration, scope string) (*Token, error) {
-	token := generateToken(userID, ttl, scope)
-	err := m.Insert(token)
+	token, err := generateToken(userID, ttl, scope)
+	if err != nil {
+		return nil, err
+	}
+	err = m.Insert(token)
 	return token, err
 }
 
