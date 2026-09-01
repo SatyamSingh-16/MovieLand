@@ -11,4 +11,8 @@ require (
 	golang.org/x/time v0.15.0
 )
 
-require github.com/stretchr/testify v1.11.1 // indirect
+require (
+	github.com/stretchr/testify v1.11.1 // indirect
+	github.com/wneessen/go-mail v0.8.1 // indirect
+	golang.org/x/text v0.41.0 // indirect
+)

@@ -9,9 +9,11 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"MovieLand.satyam/internal/data"
+	"MovieLand.satyam/internal/mailer"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -50,6 +52,8 @@ type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models
+	mailer *mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -119,10 +123,17 @@ func main() {
 	expvar.Publish("timestamp", expvar.Func(func() any {
 		return time.Now().Unix()
 	}))
+	mp, err := mailer.New(cfg.smtp.host, cfg.smtp.port, cfg.smtp.username, cfg.smtp.password, cfg.smtp.sender)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
 	app := &application{
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mp,
 	}
 
 	err = app.serve()

@@ -1,0 +1,41 @@
+{{define "subject"}}Welcome to MovieLand!{{end}}
+
+{{define "plainbody"}}
+Hi,
+
+Thanks for signing up for a MovieLand account. We're excited to have you on board!
+
+For future reference, your user ID number is {{.userID}}.
+
+Please send a request to the `PUT /v1/users/activated` endpoint with the
+following JSON body to activate your account:
+
+{"token": "{{.activationToken}}"}
+
+Please note that this is a one-time use token and it will expire in 3 days.
+
+Thanks,
+
+The MovieLand Team
+{{end}}
+
+{{define "htmlbody"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <p>Hi,</p>
+    <p>Thanks for signing up for a MovieLand account. We're excited to have you on board!</p>
+    <p>For future reference, your user ID number is {{.userID}}.</p>
+    <p>Please send a request to the <code>PUT /v1/users/activated</code> endpoint with the
+    following JSON body to activate your account:</p>
+    <pre><code>{"token": "{{.activationToken}}"}</code></pre>
+    <p>Please note that this is a one-time use token and it will expire in 3 days.</p>
+    <p>Thanks,</p>
+    <p>The MovieLand Team</p>
+  </body>
+</html>
+{{end}}
